@@ -1,3 +1,4 @@
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import praktikum.*;
@@ -6,58 +7,68 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BurgerTest {
-    Database db = new Database();
-    Burger burger = new Burger();
-
     @Mock
-    Burger mock_burger;
+    Database database;
+
+    @Before
+    public void init() {
+        Mockito.when(database.availableBuns()).thenReturn(List.of(new Bun("briosh", 7f)));
+        Mockito.when(database.availableIngredients()).thenReturn(List.of(
+                new Ingredient(IngredientType.SAUCE, "ranch", 1.5f),
+                new Ingredient(IngredientType.FILLING, "chimpken", 2f)
+        ));
+    }
 
     @Test
     public void getPriceTest() {
-        Bun bun = new Bun("Супербулочка", 5.5f);
-        Ingredient ingredient = new Ingredient(IngredientType.SAUCE, "hot sauce", 100f);
-        burger.setBuns(bun);
-        burger.addIngredient(ingredient);
-        float expected = bun.getPrice() * 2 + ingredient.getPrice();
+        Burger burger = new Burger();
+        burger.setBuns(database.availableBuns().get(0));
+        burger.addIngredient(database.availableIngredients().get(0));
+        burger.addIngredient(database.availableIngredients().get(1));
+        float expected = 17.5f;
         float actual = burger.getPrice();
         assertEquals(expected, actual, 0.0002);
     }
 
     @Test
     public void removeIngredientTest() {
-        Ingredient ingredient = new Ingredient(IngredientType.SAUCE, "hot sauce", 100);
-        burger.addIngredient(ingredient);
-        burger.removeIngredient(burger.ingredients.indexOf(ingredient));
-        Boolean actual = burger.ingredients.isEmpty();
-        assertEquals(true, actual);
+        Burger burger = new Burger();
+        burger.addIngredient(database.availableIngredients().get(0));
+        burger.addIngredient(database.availableIngredients().get(1));
+        burger.removeIngredient(1);
+        List<Ingredient> actual = burger.ingredients;
+        List<Ingredient> expected = List.of(database.availableIngredients().get(0));
+        assertEquals(expected, actual);
     }
 
     @Test
     public void moveIngredientTest() {
-        mock_burger.moveIngredient(0, 1);
-        Mockito.verify(mock_burger).moveIngredient(Mockito.anyInt(), Mockito.anyInt());
-    }
-
-    @Test
-    public void getReceiptMockTest() {
-        System.out.println(mock_burger.getReceipt());
-        Mockito.when(mock_burger.getReceipt()).thenReturn("Чек выдан");
-        System.out.println(mock_burger.getReceipt());
+        Burger burger = new Burger();
+        burger.addIngredient(database.availableIngredients().get(0));
+        burger.addIngredient(database.availableIngredients().get(1));
+        burger.moveIngredient(0, 1);
+        List<Ingredient> actual = burger.ingredients;
+        List<Ingredient> expected = List.of(database.availableIngredients().get(1), database.availableIngredients().get(0));
+        assertEquals(expected, actual);
     }
 
     @Test
     public void getReceiptTest() {
-        burger.setBuns(db.availableBuns().get(0));
-        burger.addIngredient(db.availableIngredients().get(0));
+        Burger burger = new Burger();
+        burger.setBuns(database.availableBuns().get(0));
+        burger.addIngredient(database.availableIngredients().get(1));
+
         String actual = burger.getReceipt();
-        StringBuilder receiptBuilder = new StringBuilder("(==== black bun ====)\n");
-        receiptBuilder.append("= sauce hot sauce =\n");
-        receiptBuilder.append("(==== black bun ====)\n");
-        receiptBuilder.append(String.format("\nPrice: %f\n", 300.0));
+        StringBuilder receiptBuilder = new StringBuilder("(==== briosh ====)\n");
+        receiptBuilder.append("= filling chimpken =\n");
+        receiptBuilder.append("(==== briosh ====)\n");
+        receiptBuilder.append(String.format("\nPrice: %f\n", 16.0));
         String expected = receiptBuilder.toString();
         assertEquals(expected, actual);
     }
